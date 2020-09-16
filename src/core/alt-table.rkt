@@ -2,7 +2,7 @@
 
 (require racket/hash)
 (require "../common.rkt" "../alternative.rkt" "../points.rkt"
-         "../timeline.rkt" "../programs.rkt")
+         "../timeline.rkt" "../programs.rkt" "../interface.rkt")
 
 (provide
  (contract-out
@@ -160,14 +160,32 @@
          alt-cost
          (argmins (compose length alts->pnts) (if (null? undone-altns) altns undone-altns))))))
 
-  (let loop ([cur-atab atab])
+  (define all-alts (hash-keys (alt-table-alt->points atab)))
+  (define simplest (argmin alt-cost all-alts))
+
+  (define (remove-simplest atab)
+    (define err-fn (λ (x) (errors-score (errors (alt-program x) (*pcontext*) (*output-repr*)))))
+    (define best (argmin identity (map err-fn all-alts)))
+    (define errs (err-fn simplest))
+    (if (< (- errs best) 0.5)
+        atab
+        (rm-alts atab simplest)))
+
+  (let loop ([cur-atab atab] [check-simplest? #t])
     (let* ([alts->pnts (alt-table-alt->points cur-atab)]
-     [pnts->alts (alt-table-point->alts cur-atab)]
-     [essential-alts (get-essential pnts->alts)]
-     [tied-alts (get-tied-alts essential-alts alts->pnts pnts->alts)])
-      (if (null? tied-alts) cur-atab
-    (let ([atab* (rm-alts cur-atab (worst cur-atab tied-alts))])
-      (loop atab*))))))
+           [pnts->alts (alt-table-point->alts cur-atab)]
+           [essential-alts (get-essential pnts->alts)]
+           [essential-alts* (if check-simplest?
+                                essential-alts
+                                (set-add essential-alts simplest))]
+           [tied-alts (get-tied-alts essential-alts* alts->pnts pnts->alts)])
+      (cond
+       [(null? tied-alts) cur-atab]
+       [(set-member? tied-alts simplest)
+        (loop (remove-simplest cur-atab) #f)]
+       [else
+        (loop (rm-alts cur-atab (worst cur-atab tied-alts))
+              check-simplest?)]))))
 
 (define (rm-alts atab . altns)
   (match-define (alt-table point->alts alt->points alt->done? _) atab)

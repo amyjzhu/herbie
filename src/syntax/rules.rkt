@@ -655,8 +655,10 @@
 
 (define-ruleset* htrig-expand (hyperbolic)
   #:type ([x real] [y real])
-  [sinh-undef  (- (exp x) (exp (neg x)))                       (* 2 (sinh x))]
-  [cosh-undef  (+ (exp x) (exp (neg x)))                       (* 2 (cosh x))]
+  [sinh-undef  (/ (- (exp x) (exp (neg x))) 2)                 (sinh x)]
+  [cosh-undef  (/ (+ (exp x) (exp (neg x))) 2)                 (cosh x)]
+  [2sinh-undef (- (exp x) (exp (neg x)))                       (* 2 (sinh x))]
+  [2cosh-undef (+ (exp x) (exp (neg x)))                       (* 2 (cosh x))]
   [tanh-undef  (/ (- (exp x) (exp (neg x))) (+ (exp x) (exp (neg x)))) (tanh x)]
   [cosh-sum    (cosh (+ x y))         (+ (* (cosh x) (cosh y)) (* (sinh x) (sinh y)))]
   [cosh-diff   (cosh (- x y))         (- (* (cosh x) (cosh y)) (* (sinh x) (sinh y)))]

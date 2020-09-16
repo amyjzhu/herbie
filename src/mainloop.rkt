@@ -59,6 +59,10 @@
           "unused ~a ~a" (if (equal? (set-count unused) 1) "variable" "variables")
           (string-join (map ~a unused) ", "))))
 
+;; needed during debugging, rules no longer auto generate!!!
+(define (gen-rules repr-name)
+  (*needed-reprs* (cons (get-representation repr-name) (*needed-reprs*))))
+
 ;; Setting up
 (define (setup-prog! prog
                      #:precondition [precondition #f]
