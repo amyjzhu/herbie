@@ -166,8 +166,8 @@
   (define (remove-simplest atab)
     (define err-fn (λ (x) (errors-score (errors (alt-program x) (*pcontext*) (*output-repr*)))))
     (define best (argmin identity (map err-fn all-alts)))
-    (define errs (err-fn simplest))
-    (if (< (- errs best) 0.5)
+    (define score (err-fn simplest))
+    (if (< (- score best) 0.5)
         atab
         (rm-alts atab simplest)))
 

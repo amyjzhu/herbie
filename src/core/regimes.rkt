@@ -125,6 +125,12 @@
                    #:key (λ (pts) (apply fn (car pts))))])
     (mk-pcontext (map car p&e) (map cdr p&e))))
 
+(define (alt-cost altn)
+  (let loop ([expr (program-body (alt-program altn))])
+    (if (list? expr)
+        (apply + 1 (map loop (cdr expr)))
+        1)))
+
 (define (option-on-expr alts expr repr)
   (debug #:from 'regimes #:depth 4 "Trying to branch on" expr "from" alts)
   (define vars (program-variables (alt-program (first alts))))
@@ -135,10 +141,12 @@
   (define can-split? (append (list #f)
                              (for/list ([val (cdr splitvals)] [prev splitvals])
                                (</total prev val repr))))
+
+  (define cost-lst (map alt-cost alts))
   (define err-lsts
     (for/list ([alt alts]) (errors (alt-program alt) pcontext* repr)))
   (define bit-err-lsts (map (curry map ulps->bits) err-lsts))
-  (define split-indices (err-lsts->split-indices bit-err-lsts can-split?))
+  (define split-indices (err-lsts->split-indices bit-err-lsts can-split? cost-lst))
   (option split-indices alts pts expr (pick-errors split-indices pts err-lsts)))
 
 (define/contract (pick-errors split-indices pts err-lsts)
@@ -259,6 +267,16 @@
        point
        (range (length point))))
 
+;; Like argmin but return the index
+(define (min-idx proc lst)
+  (for/fold ([idx #f] [best #f] #:result idx)
+            ([e lst] [i (in-naturals)])
+    (let ([score (proc e)])
+      (cond
+        [(not best) (values 0 score)]
+        [(< score best) (values i score)]
+        [else (values idx best)]))))
+
 ;; Takes a vector of numbers, and returns the partial sum of those numbers.
 ;; For example, if your vector is #(1 4 6 3 8), then this returns #(1 5 11 14 22).
 (define (partial-sum vec)
@@ -281,16 +299,22 @@
      (and (> pidx 0)) (list-ref can-split? pidx))
    (= (si-pidx (last split-indices)) (length can-split?))))
 
-(define/contract (err-lsts->split-indices err-lsts can-split-lst)
-  (->i ([e (listof list)] [cs (listof boolean?)]) [result (cs) (curry valid-splitindices? cs)])
+(define/contract (err-lsts->split-indices err-lsts can-split-lst cost-lst)
+  (->i ([e (listof list)] [cs (listof boolean?)] [s (listof real?)]) [result (cs) (curry valid-splitindices? cs)])
   ;; We have num-candidates candidates, each of whom has error lists of length num-points.
   ;; We keep track of the partial sums of the error lists so that we can easily find the cost of regions.
   (define num-candidates (length err-lsts))
   (define num-points (length (car err-lsts)))
   (define min-weight num-points)
-
-  (define psums (map (compose partial-sum list->vector) err-lsts))
+  (define simplest-idx (min-idx identity cost-lst))
   (define can-split? (curry vector-ref (list->vector can-split-lst)))
+
+  (define psums 
+    (for/list ([err-lst err-lsts] [idx (in-naturals)])
+      (let ([err-lst* (if (= idx simplest-idx) ; give the simplest alt a bonus
+                          (map (λ (x) (max 0 (- x 0.5))) err-lst)
+                          err-lst)])
+        (partial-sum (list->vector err-lst*)))))
 
   ;; Our intermediary data is a list of cse's,
   ;; where each cse represents the optimal splitindices after however many passes
