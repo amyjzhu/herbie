@@ -133,13 +133,13 @@
      (values pnt (point-rec berr (min (alt-cost altn) cost) (cons altn altns))))
    #:combine (λ (a b) b)))
 
-(define (expr-cost expr)
-  (if (list? expr)
-      (apply + 1 (map expr-cost (cdr expr)))
-      1))
-
-(define (alt-cost prog)
-  (expr-cost (program-body (alt-program prog))))
+(define (min-key proc h)
+  (for/fold ([best-key #f] [best-val #f] #:result best-key)
+            ([(key value) (in-hash h)])
+    (let ([value* (proc value)])
+      (if (or (not best-key) (< value* best-val))
+          (values key value*)
+          (values best-key best-val)))))
 
 (define (minimize-alts atab)
   (define (get-essential pnts->alts)
@@ -153,15 +153,15 @@
   (define (get-tied-alts essential-alts alts->pnts pnts->alts)
     (remove* essential-alts (hash-keys alts->pnts)))
 
-  (define (close-alts alts best)
+  (define (close-alts err-table alts best)
     (define best-cost (alt-cost best))
-    (define best-score (score-alt best))
+    (define best-score (hash-ref err-table best))
     (define simplicity-factor 0.025)
     (let loop ([alts alts])
       (if (null? alts)
           '()
           (let ([cost (alt-cost (car alts))]
-                [score (score-alt (car alts))])
+                [score (hash-ref err-table (car alts))])
             (if (< (- score best-score) (* (- best-cost cost) simplicity-factor))
                 (cons (car alts) (loop (cdr alts)))
                 (loop (cdr alts)))))))
@@ -177,14 +177,15 @@
          (argmins (compose length alts->pnts) (if (null? undone-altns) altns undone-altns))))))
 
   (define all-alts (hash-keys (alt-table-alt->points atab)))
-  (define best (argmin score-alt all-alts))
+  (define err-table (for/hash ([altn all-alts]) (values altn (score-alt altn))))
+  (define best (min-key identity err-table))
+
   (let loop ([cur-atab atab])
     (let* ([alts->pnts (alt-table-alt->points cur-atab)]
            [pnts->alts (alt-table-point->alts cur-atab)]
            [essential-alts (get-essential pnts->alts)]
            [removable-alts (remove best (get-tied-alts essential-alts alts->pnts pnts->alts))]
-           [close-alts (close-alts removable-alts best)]
-           [tied-alts (remove* close-alts removable-alts)])
+           [tied-alts (remove* (close-alts err-table removable-alts best) removable-alts)])
       (if (null? tied-alts)
           cur-atab
           (loop (rm-alts cur-atab (worst atab tied-alts)))))))

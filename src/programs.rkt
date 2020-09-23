@@ -6,7 +6,7 @@
 (module+ test (require rackunit))
 
 (provide (all-from-out "syntax/syntax.rkt")
-         program-body program-variables
+         program-body program-variables program-cost
          type-of repr-of
          expr-supports?
          location-hash
@@ -32,6 +32,14 @@
   (-> expr? (listof symbol?))
   (match-define (list (or 'lambda 'λ 'FPCore) (list vars ...) body) prog)
   vars)
+
+(define/contract (program-cost prog)
+  (-> expr? real?)
+  (match-define (list (or 'lambda 'λ 'FPCore) (list vars ...) body) prog)
+  (let loop ([expr body])
+    (if (list? expr)
+        (apply + 1 (map loop (cdr expr)))
+        1)))
 
 ;; Returns type name
 ;; Fast version does not recurse into functions applications

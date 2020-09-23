@@ -125,12 +125,6 @@
                    #:key (λ (pts) (apply fn (car pts))))])
     (mk-pcontext (map car p&e) (map cdr p&e))))
 
-(define (alt-cost altn)
-  (let loop ([expr (program-body (alt-program altn))])
-    (if (list? expr)
-        (apply + 1 (map loop (cdr expr)))
-        1)))
-
 (define (option-on-expr alts expr repr)
   (debug #:from 'regimes #:depth 4 "Trying to branch on" expr "from" alts)
   (define vars (program-variables (alt-program (first alts))))
