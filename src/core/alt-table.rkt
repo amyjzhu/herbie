@@ -21,6 +21,9 @@
   (atab-min-errors (alt-table? . -> . (listof real?)))
   (split-atab (alt-table? (non-empty-listof any/c) . -> . (listof alt-table?)))))
 
+(define (score-alt alt)
+  (errors-score (errors (alt-program alt) (*pcontext*) (*output-repr*))))
+
 ;; Public API
 
 (struct alt-table (point->alts alt->points alt->done? context) #:prefab)
@@ -150,6 +153,19 @@
   (define (get-tied-alts essential-alts alts->pnts pnts->alts)
     (remove* essential-alts (hash-keys alts->pnts)))
 
+  (define (close-alts alts best)
+    (define best-cost (alt-cost best))
+    (define best-score (score-alt best))
+    (define simplicity-factor 0.025)
+    (let loop ([alts alts])
+      (if (null? alts)
+          '()
+          (let ([cost (alt-cost (car alts))]
+                [score (score-alt (car alts))])
+            (if (< (- score best-score) (* (- best-cost cost) simplicity-factor))
+                (cons (car alts) (loop (cdr alts)))
+                (loop (cdr alts)))))))
+
   (define (worst atab altns)
     (let* ([alts->pnts (curry hash-ref (alt-table-alt->points atab))]
            [alts->done? (curry hash-ref (alt-table-alt->done? atab))])
@@ -161,31 +177,17 @@
          (argmins (compose length alts->pnts) (if (null? undone-altns) altns undone-altns))))))
 
   (define all-alts (hash-keys (alt-table-alt->points atab)))
-  (define simplest (argmin alt-cost all-alts))
-
-  (define (remove-simplest atab)
-    (define err-fn (λ (x) (errors-score (errors (alt-program x) (*pcontext*) (*output-repr*)))))
-    (define best (argmin identity (map err-fn all-alts)))
-    (define score (err-fn simplest))
-    (if (< (- score best) 0.5)
-        atab
-        (rm-alts atab simplest)))
-
-  (let loop ([cur-atab atab] [check-simplest? #t])
+  (define best (argmin score-alt all-alts))
+  (let loop ([cur-atab atab])
     (let* ([alts->pnts (alt-table-alt->points cur-atab)]
            [pnts->alts (alt-table-point->alts cur-atab)]
            [essential-alts (get-essential pnts->alts)]
-           [essential-alts* (if check-simplest?
-                                essential-alts
-                                (set-add essential-alts simplest))]
-           [tied-alts (get-tied-alts essential-alts* alts->pnts pnts->alts)])
-      (cond
-       [(null? tied-alts) cur-atab]
-       [(set-member? tied-alts simplest)
-        (loop (remove-simplest cur-atab) #f)]
-       [else
-        (loop (rm-alts cur-atab (worst cur-atab tied-alts))
-              check-simplest?)]))))
+           [removable-alts (remove best (get-tied-alts essential-alts alts->pnts pnts->alts))]
+           [close-alts (close-alts removable-alts best)]
+           [tied-alts (remove* close-alts removable-alts)])
+      (if (null? tied-alts)
+          cur-atab
+          (loop (rm-alts cur-atab (worst atab tied-alts)))))))
 
 (define (rm-alts atab . altns)
   (match-define (alt-table point->alts alt->points alt->done? _) atab)

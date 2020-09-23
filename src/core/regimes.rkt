@@ -306,14 +306,15 @@
   (define num-candidates (length err-lsts))
   (define num-points (length (car err-lsts)))
   (define min-weight num-points)
-  (define simplest-idx (min-idx identity cost-lst))
+  (define simplest-cost (argmin identity cost-lst))
   (define can-split? (curry vector-ref (list->vector can-split-lst)))
+  (define simplicity-factor 0.025)
 
   (define psums 
     (for/list ([err-lst err-lsts] [idx (in-naturals)])
-      (let ([err-lst* (if (= idx simplest-idx) ; give the simplest alt a bonus
-                          (map (λ (x) (max 0 (- x 0.5))) err-lst)
-                          err-lst)])
+      (let* ([cost (list-ref cost-lst idx)]
+             [adj (- cost simplest-cost)]
+             [err-lst* (map (λ (x) (+ x (* simplicity-factor adj))) err-lst)])
         (partial-sum (list->vector err-lst*)))))
 
   ;; Our intermediary data is a list of cse's,
