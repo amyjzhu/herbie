@@ -153,18 +153,17 @@
   (define (get-tied-alts essential-alts alts->pnts pnts->alts)
     (remove* essential-alts (hash-keys alts->pnts)))
 
+  ; Alts with adjusted scores that are better than the best alt
+  ; should not be removed
   (define (close-alts err-table alts best)
     (define best-cost (alt-cost best))
     (define best-score (hash-ref err-table best))
-    (define simplicity-factor 0.025)
-    (let loop ([alts alts])
-      (if (null? alts)
-          '()
-          (let ([cost (alt-cost (car alts))]
-                [score (hash-ref err-table (car alts))])
-            (if (< (- score best-score) (* (- best-cost cost) simplicity-factor))
-                (cons (car alts) (loop (cdr alts)))
-                (loop (cdr alts)))))))
+    (define simplicity-factor 0.005)
+    (filter
+      (λ (a) (let ([cost (alt-cost a)]
+                   [score (hash-ref err-table a)])
+                (< (- score best-score) (* (- best-cost cost) simplicity-factor))))
+      alts))
 
   (define (worst atab altns)
     (let* ([alts->pnts (curry hash-ref (alt-table-alt->points atab))]
@@ -178,7 +177,7 @@
 
   (define all-alts (hash-keys (alt-table-alt->points atab)))
   (define err-table (for/hash ([altn all-alts]) (values altn (score-alt altn))))
-  (define best (min-key identity err-table))
+  (define best (min-key identity err-table))  ; never remove the best alt overall
 
   (let loop ([cur-atab atab])
     (let* ([alts->pnts (alt-table-alt->points cur-atab)]

@@ -302,7 +302,7 @@
   (define min-weight num-points)
   (define simplest-cost (argmin identity cost-lst))
   (define can-split? (curry vector-ref (list->vector can-split-lst)))
-  (define simplicity-factor 0.025)
+  (define simplicity-factor 0.005)
 
   (define psums 
     (for/list ([err-lst err-lsts] [idx (in-naturals)])
