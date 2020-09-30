@@ -158,7 +158,7 @@
   (define (close-alts err-table alts best)
     (define best-cost (alt-cost best))
     (define best-score (hash-ref err-table best))
-    (define simplicity-factor 0.005)
+    (define simplicity-factor 0)
     (filter
       (λ (a) (let ([cost (alt-cost a)]
                    [score (hash-ref err-table a)])
