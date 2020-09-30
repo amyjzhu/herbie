@@ -2,7 +2,7 @@
 
 (require racket/place)
 (require "../common.rkt" "../sandbox.rkt" "../plugin.rkt" "pages.rkt"
-         "../syntax/read.rkt" "../datafile.rkt")
+         "../syntax/read.rkt" "../datafile.rkt" "../programs.rkt")
 
 (provide get-test-results)
 
@@ -108,6 +108,13 @@
   ;; Cause unknown. Seems to disappear in a later branch. Weird stuff
   ;; TODO: Check on this later.
   (for-each place-kill workers)
+
+  (define cost
+    (for/fold ([cost 0]) ([out outs])
+      (let ([vars (table-row-vars (cdr out))]
+            [expr (table-row-output (cdr out))])
+        (+ cost (program-cost `(lambda ,vars ,expr))))))
+  (printf "Cost: ~a\n" cost)
 
   (map cdr (sort outs < #:key car)))
 
