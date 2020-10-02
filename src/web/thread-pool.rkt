@@ -69,6 +69,11 @@
               (~r (table-row-result data) #:min-width 2 #:precision 0)
               (table-row-name data))]))
 
+(define (expr-cost expr)
+  (if (list? expr)
+      (apply + 1 (map expr-cost (cdr expr)))
+      1))
+
 (define (run-workers progs threads #:seed seed #:profile profile? #:debug debug? #:dir dir)
   (define workers
     (for/list ([wid (in-range threads)])
@@ -108,6 +113,12 @@
   ;; Cause unknown. Seems to disappear in a later branch. Weird stuff
   ;; TODO: Check on this later.
   (for-each place-kill workers)
+  (define cost
+    (for/fold ([cost 0]) ([out outs])
+      (let ([vars (table-row-vars (cdr out))]
+            [expr (table-row-output (cdr out))])
+        (+ cost (expr-cost expr)))))
+  (printf "Cost: ~a\n" cost)
 
   (map cdr (sort outs < #:key car)))
 
