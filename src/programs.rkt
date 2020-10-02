@@ -369,11 +369,8 @@
          (define prec* (if (set-member? '(TRUE FALSE) expr) 'bool prec))
          (define constant* (get-parametric-constant expr prec*))
          (values constant* (constant-info constant* 'type))]
-        [(? variable?) 
-         (values 
-           expr 
-           (if (equal? (representation-name (dict-ref var-reprs expr)) 'bool) 
-               'bool prec))])))
+        [(? variable?)
+         (values expr (representation-name (dict-ref var-reprs expr)))])))
   expr*)
 
 ;; TODO(interface): This needs to be changed once the syntax checker is updated

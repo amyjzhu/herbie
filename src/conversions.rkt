@@ -18,10 +18,10 @@
   (define oprec* (string->symbol (string-replace* (~a oprec) replace-table)))
   (define conv (sym-append iprec* '-> oprec*))
   (define-values (irepr orepr)
-    (with-handlers ([exn:fail?
-                     (λ (e) (error 'generate-conversion-1way
-                                   "Invalid conversion: ~a to ~a\n" iprec oprec))])
-      (values (get-representation iprec) (get-representation oprec))))
+    (with-handlers 
+      ([exn:fail? (λ (e) (error 'generate-conversion-1way
+                                "Invalid repr(s): ~a, ~a.\n" iprec oprec))])
+        (values (get-representation iprec) (get-representation oprec))))
 
   (unless (hash-has-key? parametric-operators conv)
     (define impl (compose (representation-bf->repr orepr) (representation-repr->bf irepr)))
@@ -42,7 +42,6 @@
       (list
         (list rulename 'a  `(,conv (,repr-rewrite a)))))))
 
-
 (define (generate-conversions convs)
   (define reprs
     (for/fold ([reprs '()]) ([conv convs])
@@ -50,7 +49,5 @@
       (define prec2 (last conv))
       (generate-conversion-1way prec1 prec2)
       (generate-conversion-1way prec2 prec1)
-      (define repr1 (get-representation prec1))
-      (define repr2 (get-representation prec2))
-      (set-union reprs (list repr1 repr2))))
-  (*needed-reprs* (append reprs (*needed-reprs*))))
+      (set-union reprs (list (get-representation prec1) (get-representation prec2)))))
+  (*needed-reprs* (set-union reprs (*needed-reprs*))))
