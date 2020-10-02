@@ -53,6 +53,11 @@
       (define result (run-test id test #:seed seed #:profile profile? #:debug debug? #:dir dir))
       (place-channel-put ch `(done ,id ,self ,result)))))
 
+(define (expr-cost expr)
+  (if (list? expr)
+      (apply + 1 (map expr-cost (cdr expr)))
+      1))
+
 (define (print-test-result i n data)
   (eprintf "~a/~a\t" (~a i #:width 3 #:align 'right) n)
   (match (table-row-status data)
@@ -108,6 +113,13 @@
   ;; Cause unknown. Seems to disappear in a later branch. Weird stuff
   ;; TODO: Check on this later.
   (for-each place-kill workers)
+
+  (define cost
+    (for/fold ([cost 0]) ([out outs])
+      (let ([vars (table-row-vars (cdr out))]
+            [expr (table-row-output (cdr out))])
+        (+ cost (expr-cost expr)))))
+  (printf "Cost: ~a\n" cost)
 
   (map cdr (sort outs < #:key car)))
 
