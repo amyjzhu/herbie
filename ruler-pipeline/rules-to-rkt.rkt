@@ -844,6 +844,7 @@
   [if-if-and      (if a (if b x y) y) (if (and a b) x y)]
   [if-if-and-not  (if a (if b y x) y) (if (and a (not b)) x y)])
 
+#;
 (define-ruleset* erf-rules (special simplify)
   #:type ([x real])
   [erf-odd          (erf (neg x))        (neg (erf x))]
