@@ -1,0 +1,10 @@
+normal distribution
+Kahan p13 Example 1
+Data Colour CIE lightness from colour 223 (b/c of SIGSEGV MAPERR si_code 1 fault on addr 0x7ffe6185bfe8)
+did not fix, removing Data Colour RBG HSLsv from Colour 223 A
+did not fix, removing 227 Data Colour CIE cie LAB View from colour 233 C
+
+
+new rules:
+same as before, with:
+177 from Rump in a 1983 paper

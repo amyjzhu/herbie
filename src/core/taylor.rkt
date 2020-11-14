@@ -8,7 +8,7 @@
 
 (provide approximate)
 
-#;
+
 (define (approximate expr vars #:transform [tforms #f]
                      #:terms [terms 3] #:iters [iters 5])
   "Take a Taylor expansion in multiple variables, with at most `terms` terms."
@@ -103,7 +103,7 @@
                                                   ((cdr tform) var)))
                                                expts) res) (+ 1 i)))))))))))
 
-(define approximate identity)
+;(define approximate identity)
 
 (define (make-sum terms)
   (match terms

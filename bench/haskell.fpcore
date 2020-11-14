@@ -85,6 +85,7 @@
  :name "Data.Colour.CIE.Chromaticity:chromaCoords from colour-2.3.3"
  (- (- 1.0 x) y))
 
+#;
 (FPCore  (x y)
  :name "Data.Colour.RGB:hslsv from colour-2.3.3, A"
  (/ (+ x y) 2.0))
@@ -171,6 +172,7 @@
  :name "Data.Colour.SRGB:transferFunction from colour-2.3.3"
  (- (* (+ x 1.0) y) x))
 
+#;
 (FPCore  (x)
  :name "Data.Colour.CIE:lightness from colour-2.3.3"
  (- (* x 116.0) 16.0))
@@ -183,6 +185,7 @@
  :name "Data.Colour.CIE:cieLABView from colour-2.3.3, B"
  (* 500.0 (- x y)))
 
+#;
 (FPCore  (x y)
  :name "Data.Colour.CIE:cieLABView from colour-2.3.3, C"
  (* 200.0 (- x y)))

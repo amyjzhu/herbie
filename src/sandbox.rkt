@@ -41,7 +41,7 @@
 
   (define (compute-result test)
     (parameterize ([*debug-port* (or debug-port (*debug-port*))]
-                   [*timeline-disabled* false] [*warnings-disabled* true])
+                   [*timeline-disabled* true] [*warnings-disabled* true])
       (define start-time (current-inexact-milliseconds))
       (when seed (set-seed! seed))
       (random) ;; Child process uses deterministic but different seed from evaluator
@@ -105,7 +105,7 @@
                       (*all-alts*)))))
 
   (define (on-exception start-time e)
-    (parameterize ([*timeline-disabled* false])
+    (parameterize ([*timeline-disabled* true])
       (timeline-event! 'end))
     (test-failure test (bf-precision)
                   (- (current-inexact-milliseconds) start-time) (timeline-extract output-repr)
@@ -125,7 +125,7 @@
   (if (engine-run (*timeout*) eng)
       (begin
         (engine-result eng))
-      (parameterize ([*timeline-disabled* false])
+      (parameterize ([*timeline-disabled* true])
         (timeline-load! timeline)
         (test-timeout test (bf-precision) (*timeout*) (timeline-extract output-repr) '()))))
 

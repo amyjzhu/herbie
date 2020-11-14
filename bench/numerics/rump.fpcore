@@ -15,6 +15,7 @@
 ;; How Reliable are the Results of Computers
 ;; Jahrbuch Uberblicke Mathematik (1983)
 
+#;
 (FPCore (x y)
   :name "From Rump in a 1983 paper"
   :pre (and (== x 10864) (== y 18817))

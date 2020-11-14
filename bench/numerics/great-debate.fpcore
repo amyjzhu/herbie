@@ -23,6 +23,7 @@
 
   (/ (* (- x y) (+ x y)) (+ (* x x) (* y y))))
 
+#;
 (FPCore (t)
   :name "Kahan p13 Example 1"
   (let ([u (/ (* 2 t) (+ 1 t))])
