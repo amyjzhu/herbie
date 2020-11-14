@@ -133,7 +133,9 @@
 
 (define (update-rules rules groups)
   (when (ormap (curry flag-set? 'rules) groups) ; update all
-    (all-rules (append (all-rules) rules))
+    (if (set-member? groups 'ruler)
+      (all-rules (all-rules))
+    (all-rules (append (all-rules) rules)))
     (when (set-member? groups 'simplify) ; update simplify
       (simplify-rules (append (simplify-rules) rules))  
       (when (set-member? groups 'fp-safe)  ; update fp-safe

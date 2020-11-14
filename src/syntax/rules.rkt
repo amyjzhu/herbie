@@ -36,7 +36,9 @@
 
 (define (update-rules rules groups)
   (when (ormap (curry flag-set? 'rules) groups) ; update all
-    (all-rules (append (all-rules) rules))
+    (if (set-member? groups 'ruler)
+      (all-rules (all-rules))
+    (all-rules (append (all-rules) rules)))
     (when (set-member? groups 'simplify) ; update simplify
       (simplify-rules (append (simplify-rules) rules))  
       (when (set-member? groups 'fp-safe)  ; update fp-safe
@@ -754,7 +756,6 @@
   [erf-erfc         (erfc x)             (- 1 (erf x))]
   [erfc-erf         (erf x)              (- 1 (erfc x))])
 
-#;
 (define-ruleset* ruler-rules (ruler simplify)
 #:type ([a real] [b real] [c real])
 [0 (+ a b) (+ b a)]
