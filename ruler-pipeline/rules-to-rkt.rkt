@@ -46,6 +46,8 @@
 
 ;;(display (remove-questions (split-all '("?a => (- ?a 0)" "(+ ?a ?b) => (+ ?b ?a)"))))
 
+(define format-neg (lambda (rules) (map (lambda (rule) (string-replace rule "~" "neg")) rules)))
+
 (define rules-as-strings (λ(rules)
                            (map
                             (λ(rule)
@@ -56,7 +58,7 @@
 ;(display (string-join (rules-as-strings (remove-questions (split-all '("?a => (- ?a 0)" "(+ ?a ?b) => (+ ?b ?a)")))) "\n" ))
 
 (define process-rules (λ(string-rules-list)
-                        (string-join (rules-as-strings (remove-questions (split-all string-rules-list))) "\n" )))
+                        (string-join (rules-as-strings (remove-questions (split-all (format-neg string-rules-list)))) "\n" )))
 
 ;(display (process-rules '("?a => (- ?a 0)" "(+ ?a ?b) => (+ ?b ?a)")))
 
